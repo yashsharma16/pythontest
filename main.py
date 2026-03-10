@@ -1,5 +1,4 @@
 import os
-import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 
@@ -12,21 +11,15 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import google_search
 from google.genai import types
 
-# API Format is http://localhost:8000/search?q=tcs+events 
-
 # 1. Agent Configuration
-# Using gemini-1.5-flash for the most stable tool-calling logic
 search_agent = LlmAgent(
     name="UniversalSearchBot",
     model="gemini-2.5-flash", 
     tools=[google_search],
     instruction=(
-    "You are a professional researcher. "
-    "CRITICAL: Always use 'google_search' to find current data for March 2026. "
-    "Search for and collect the following values: Event Name, Event Type (Summit/Webinar/Conference), "
-    "Sponsorship Details, Location, and Link. "
-    "After the search, you MUST provide a 3-4 sentence summary of the findings. "
-    "Do not stop until you have written the summary text."
+        "You are a professional researcher. "
+        "CRITICAL: Always use 'google_search' to find current data for March 2026. "
+        "Summarize findings in 3-4 sentences."
     )
 )
 
@@ -43,51 +36,32 @@ app = FastAPI()
 @app.get("/search")
 async def execute_search(q: str):
     user_id = "user_001"
-    session_id = f"sess_{hash(q)}" # Fresh session per query to prevent context overlap
+    session_id = f"sess_{hash(q)}" 
 
     try:
-        # Initial query to the agent
         events = runner.run(
             user_id=user_id,
             session_id=session_id,
             new_message=types.Content(role="user", parts=[types.Part(text=q)])
         )
 
-        final_answer = ""
-        
-        # We loop through events to collect all generated text
-        for event in events:
-            if event.content and event.content.parts:
-                for part in event.content.parts:
-                    if part.text:
-                        final_answer += part.text
+        final_answer = "".join([part.text for event in events if event.content and event.content.parts for part in event.content.parts if part.text])
 
-        # --- THE FIX FOR "ALL CASES" ---
-        # If final_answer is empty, it means the agent called a tool 
-        # but the runner stopped. We send a "hidden" prompt to force the summary.
+        # Logic to force summary if tool-call didn't return text
         if not final_answer.strip():
             retry_events = runner.run(
                 user_id=user_id,
                 session_id=session_id,
-                new_message=types.Content(role="user", parts=[types.Part(text="Now, summarize those results for me.")])
+                new_message=types.Content(role="user", parts=[types.Part(text="Please provide the summary of those search results.")])
             )
-            for rev in retry_events:
-                if rev.content and rev.content.parts:
-                    for rp in rev.content.parts:
-                        if rp.text:
-                            final_answer += rp.text
+            final_answer = "".join([part.text for rev in retry_events if rev.content and rev.content.parts for part in rev.content.parts if part.text])
 
         if not final_answer.strip():
-            return {"error": "The agent was unable to synthesize a response. Check your API limits."}
+            return {"error": "Synthesis failed."}
 
-        return {
-            "query": q,
-            "answer": final_answer.strip()
-        }
+        return {"query": q, "answer": final_answer.strip()}
 
     except Exception as e:
-        print(f"Debug Log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Note: No uvicorn.run here for Gunicorn usage.
