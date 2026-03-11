@@ -19,7 +19,7 @@ app = FastAPI()
 # Define which origins are allowed to talk to your API
 origins = [
     "http://localhost:3000",      # Common React port
-    "http://localhost:5173",      # Common Vite port
+    "http://localhost:8080",      # Common Vite port
     "https://vtest.mygreenhorn.com",  # Your deployed frontend URL
     "*"                           # Use "*" to allow ALL (not recommended for production)
 ]
