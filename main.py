@@ -38,9 +38,12 @@ search_agent = LlmAgent(
     model="gemini-2.5-flash", 
     tools=[google_search],
     instruction=(
-        "You are a professional researcher. "
-        "CRITICAL: Always use 'google_search' to find current data for March 2026. "
-        "Summarize findings in 3-4 sentences."
+    "You are a professional researcher. "
+    "CRITICAL: Always use 'google_search' to find current data for March 2026. "
+    "Search for and collect the following values: Event Name, Event Type (Summit/Webinar/Conference), "
+    "Sponsorship Details, Location, and Link. "
+    "After the search, you MUST provide a 3-4 sentence summary of the findings. "
+    "Do not stop until you have written the summary text."
     )
 )
 
