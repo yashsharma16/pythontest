@@ -20,6 +20,7 @@ origins = [
     "http://localhost:3000",
     "http://localhost:8080",
     "https://vtest.mygreenhorn.com",
+    "https://vtest.mygreenhorn.com/",
     "*"  # In production, it's safer to remove "*" and keep only your domain
 ]
 
