@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-
-load_dotenv()
+from fastapi.middleware.cors import CORSMiddleware
 
 # ADK Core Imports
 from google.adk.agents import LlmAgent
@@ -11,29 +10,28 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import google_search
 from google.genai import types
 
-from fastapi.middleware.cors import CORSMiddleware
+load_dotenv()
 
+# 1. Initialize FastAPI once
 app = FastAPI()
 
-# --- ADD THIS SECTION ---
-# Define which origins are allowed to talk to your API
+# 2. CORS Configuration
 origins = [
-    "http://localhost:3000",      # Common React port
-    "http://localhost:8080",      # Common Vite port
-    "https://vtest.mygreenhorn.com",  # Your deployed frontend URL
-    "*"                           # Use "*" to allow ALL (not recommended for production)
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "https://vtest.mygreenhorn.com",
+    "*"  # In production, it's safer to remove "*" and keep only your domain
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,            # Allows specific origins
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],              # Allows all methods (GET, POST, etc.)
-    allow_headers=["*"],              # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-# -------------------------
 
-# 1. Agent Configuration
+# 3. Agent Configuration
 search_agent = LlmAgent(
     name="UniversalSearchBot",
     model="gemini-2.5-flash", 
@@ -45,7 +43,7 @@ search_agent = LlmAgent(
     )
 )
 
-# 2. Runner & Session Setup
+# 4. Runner & Session Setup
 runner = Runner(
     agent=search_agent,
     app_name="SearchAPI",
@@ -53,8 +51,7 @@ runner = Runner(
     auto_create_session=True
 )
 
-app = FastAPI()
-
+# 5. API Routes
 @app.get("/search")
 async def execute_search(q: str):
     user_id = "user_001"
@@ -67,16 +64,25 @@ async def execute_search(q: str):
             new_message=types.Content(role="user", parts=[types.Part(text=q)])
         )
 
-        final_answer = "".join([part.text for event in events if event.content and event.content.parts for part in event.content.parts if part.text])
+        # Collect text parts
+        final_answer = "".join([
+            part.text for event in events 
+            if event.content and event.content.parts 
+            for part in event.content.parts if part.text
+        ])
 
-        # Logic to force summary if tool-call didn't return text
+        # Logic to force summary if tool-call didn't return text immediately
         if not final_answer.strip():
             retry_events = runner.run(
                 user_id=user_id,
                 session_id=session_id,
                 new_message=types.Content(role="user", parts=[types.Part(text="Please provide the summary of those search results.")])
             )
-            final_answer = "".join([part.text for rev in retry_events if rev.content and rev.content.parts for part in rev.content.parts if part.text])
+            final_answer = "".join([
+                part.text for rev in retry_events 
+                if rev.content and rev.content.parts 
+                for part in rev.content.parts if part.text
+            ])
 
         if not final_answer.strip():
             return {"error": "Synthesis failed."}
@@ -85,5 +91,3 @@ async def execute_search(q: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# Note: No uvicorn.run here for Gunicorn usage.
