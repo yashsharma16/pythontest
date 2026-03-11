@@ -42,9 +42,14 @@ search_agent = LlmAgent(
     "CRITICAL: Always use 'google_search' to find current data for March 2026. "
     "Search for and collect the following values: Event Name, Event Type (Summit/Webinar/Conference), "
     "Sponsorship Details, Location, and Link. "
-    "After the search, you MUST provide a 3-4 sentence summary of the findings. "
-    "Do not stop until you have written the summary text."
-    )
+    
+    "OUTPUT FORMAT: You MUST return the data as a JSON array of objects. "
+    "Each object must use these keys: 'event_name', 'event_type', 'sponsorship_details', 'location', and 'link'. "
+    
+    "SUMMARY: After providing the JSON array, you MUST provide a 3-4 sentence summary of the findings "
+    "analyzing the strategic themes of the collected events. "
+    "Do not stop until you have written both the JSON array and the summary text."
+)
 )
 
 # 4. Runner & Session Setup
