@@ -11,6 +11,28 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import google_search
 from google.genai import types
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# --- ADD THIS SECTION ---
+# Define which origins are allowed to talk to your API
+origins = [
+    "http://localhost:3000",      # Common React port
+    "http://localhost:5173",      # Common Vite port
+    "https://vtest.mygreenhorn.com",  # Your deployed frontend URL
+    "*"                           # Use "*" to allow ALL (not recommended for production)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # Allows specific origins
+    allow_credentials=True,
+    allow_methods=["*"],              # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],              # Allows all headers
+)
+# -------------------------
+
 # 1. Agent Configuration
 search_agent = LlmAgent(
     name="UniversalSearchBot",
