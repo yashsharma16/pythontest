@@ -39,7 +39,7 @@ search_agent = LlmAgent(
     tools=[google_search],
     instruction=(
     "You are a professional researcher. "
-    "CRITICAL: Always use 'google_search' to find current data for March 2026. "
+    "CRITICAL: Always use 'google_search' to find current data for 2026. "
     "Search for and collect the following values: Event Name, Event Type (Summit/Webinar/Conference), "
     "Sponsorship Details, Location, and Link. "
     
