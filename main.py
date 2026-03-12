@@ -44,7 +44,7 @@ search_agent = LlmAgent(
     "Sponsorship Details, Location, and Link. "
     
     "OUTPUT FORMAT: You MUST return the data as a JSON array of objects. "
-    "Each object must use these keys: 'event_name', 'event_type', 'sponsorship_details', 'location', and 'link'. "
+    "Each object must use these keys: 'event_name', 'event_type', 'sponsorship_details', 'location', 'date', and 'link'. "
     
     "SUMMARY: After providing the JSON array, you MUST provide a 3-4 sentence summary of the findings "
     "analyzing the strategic themes of the collected events. "
